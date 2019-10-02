@@ -12,6 +12,7 @@ import os
 import cv2
 import random
 import numpy as np
+import argparse
 
 
 obj_list = []
@@ -131,7 +132,8 @@ def modify(obj_count, blur=True, flip=True, resize=True, tint=True, darken=True)
     """
 
     if type(obj_count) != int:
-        assert(len(obj_count) == len(obj_list))
+        assert len(obj_count) == len(obj_list), \
+            "Given numbers of images to create is diffent than number of classes"
     else:
         obj_count = [obj_count] * (len(obj_list))
 
@@ -179,5 +181,41 @@ def modify(obj_count, blur=True, flip=True, resize=True, tint=True, darken=True)
 
 
 if __name__ == "__main__":
+
+    parser = argparse.ArgumentParser(description="Combine images to create new ones")
+
+    parser.add_argument("obj_count", help="Amount of images to create",
+                    nargs='+', type=int)
+
+    parser.add_argument('-n', action='store_true', default=False,
+                    dest='n', help='Combines the images without modifing it')
+
+    parser.add_argument('-b', action='store_true', default=False,
+                    dest='b', help='Blurs the image')
+
+    parser.add_argument('-f', action='store_true', default=False,
+                    dest='f', help='Flips the image')
+
+    parser.add_argument('-r', action='store_true', default=False,
+                    dest='r', help='Resizes the image')
+
+    parser.add_argument('-t', action='store_true', default=False,
+                    dest='t', help='Tints the image')
+
+    parser.add_argument('-d', action='store_true', default=False,
+                    dest='d', help='Darkens the image')
+
+    args = parser.parse_args()
+
+    args_dict = vars(args)
+
     get_images_names()
-    modify([5])
+
+    if args.n:
+        modify(args.obj_count, False, False, False, False, False)
+
+    elif any([args_dict[a] for a in args_dict if a != 'obj_count']):
+        modify(args.obj_count, args.b, args.f, args.r, args.t, args.d)
+
+    else:
+        modify(args.obj_count)
