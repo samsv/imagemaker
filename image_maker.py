@@ -82,21 +82,28 @@ def blur_random(img):
     return cv2.blur(img, blur_level)
 
 
+def resize_img(img, width=1.5, height=1.5):
+    width = int(img.shape[1] * width)
+    height = int(img.shape[0] * height)
+    
+    resized = cv2.resize(img, (width, height))
+
+    return resized
+
+
 def resize_random(img):
     """
     resizes the img to a random size.
     """
 
     if random.random() > 0.3: # downscale
-        width = int(img.shape[1] * random.uniform(0.4,0.7))
-        height = int(img.shape[0] * random.uniform(0.4,0.7))
+        width = random.uniform(0.4,0.7)
+        height = random.uniform(0.4,0.7)
     else: # upscale
-        width = int(img.shape[1] * random.uniform(1,1.2))
-        height = int(img.shape[0] * random.uniform(1,1.2))
+        width = random.uniform(1,1.2)
+        height = random.uniform(1,1.2)
 
-    resized = cv2.resize(img, (width, height))
-
-    return resized
+    return resize_img(img, width, height)
 
 
 def water_tint(img):
@@ -153,8 +160,17 @@ def modify(obj_count, blur=True, flip=True, resize=True, tint=True, darken=True)
                 img_obj = cv2.flip(img_obj, 1)
 
             # choose a random image from the background images
-            img_bkg = cv2.imread("bkg/" + random.choice(bkg_list))
+
+            img_bkg = None
+            # pick another image if the chosen one can't be opened
+            while (img_bkg is None):
+                img_bkg = cv2.imread("bkg/" + random.choice(bkg_list))
             
+            # if the background is smaller than the object, expand the background image
+            while ((img_bkg.shape[0] < img_obj.shape[0]) or (img_bkg.shape[1] < img_obj.shape[1])):
+                img_bkg = resize_img(img_bkg)
+
+
             if blur and random.random() >= 0.5:
                 img_bkg = blur_random(img_bkg)
             
@@ -178,6 +194,7 @@ def modify(obj_count, blur=True, flip=True, resize=True, tint=True, darken=True)
                                            + str(coords[2]) + " " + str(coords[3]))
 
             cv2.imwrite(name + ".jpg", img_join) # save image
+            print("saved", name)
 
 
 if __name__ == "__main__":
