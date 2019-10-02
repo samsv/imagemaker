@@ -44,5 +44,6 @@ import image_maker
 # and 150 new images for the object with the class number 1
 new_images = [100, 150] 
 image_maker.get_images_names() # Get images from obj and bkg folder
-image_maker.modify(new_images, flip=False, darken=False) # Create and save the new images. Don't mirror or darken the images
+# Create and save the new images. Don't mirror or darken the images
+image_maker.modify(new_images, flip=False, darken=False) 
 ```
