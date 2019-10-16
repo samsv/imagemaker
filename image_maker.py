@@ -73,6 +73,43 @@ def join_images(img_obj, img_bkg):
     return img_join, coords
 
 
+def distort_random(img):
+    """
+    Distorts the image by a random amount
+    """
+    # I don't know how this code works, it was all made using trial and error 
+    # Stack Overflow or anything like it was used
+    # If you wish to learn how this code works, check OpenCV's affine transformation tutorial
+    # Good luck using it
+    rows, cols, ch = img.shape
+
+    y = x = random.random()*50
+
+    pts1 = [[x, y]]
+    pts2 = [[x+100,y+100]]
+
+    # The numbers are magic
+    # Unexpected results WILL happen if you change them
+    # Unexpected results might happen if you don't change them as well
+    x,y = rows*random.random(), cols*random.random()/2
+    r = random.random()*30
+    pts1.append([x, y])
+    pts2.append([x+r+50, y+r+50])
+
+    # These points are the ones that work the best from the ones tested
+    # I.e. they are better than [rows, col]
+    pts1.append([rows/2, cols/2])
+    pts2.append([rows/2, cols/2])
+
+    pts1 = np.float32(pts1)
+    pts2 = np.float32(pts2)
+
+    M = cv2.getAffineTransform(pts1,pts2)
+
+    return cv2.warpAffine(img, M, (cols, rows))
+
+
+
 def blur_random(img):
     """
     Blurs the image to a random percentage.
@@ -133,13 +170,13 @@ def random_darken(img):
     return cv2.LUT(img, table)
     
 
-def modify(obj_count, blur=True, flip=True, resize=True, tint=True, darken=True):
+def modify(obj_count, transform=True, blur=True, flip=True, resize=True, tint=True, darken=True):
     """
     Modifies images. 
     """
 
     if type(obj_count) != int:
-        assert len(obj_count) == len(obj_list), \
+        assert len(obj_count) == len(obj_list) + 1, \
             "Given numbers of images to create is diffent than number of classes"
     else:
         obj_count = [obj_count] * (len(obj_list))
@@ -149,15 +186,19 @@ def modify(obj_count, blur=True, flip=True, resize=True, tint=True, darken=True)
             
             img_obj = cv2.imread("obj/" + o)
 
-            if blur and random.random() >= 0.75:
+            if blur and random.random() <= 0.95:
                 img_obj = blur_random(img_obj)
             
-            if resize and random.random() >= 0.75:
+            if resize and random.random() <= 0.95:
                 img_obj = resize_random(img_obj)
 
             # mirror image
-            if flip and random.random() >= 0.5:
+            if flip and random.random() <= 0.5:
                 img_obj = cv2.flip(img_obj, 1)
+
+            # transform (experimental)
+            if transform and random.random() <= 0.95:
+                img_obj = distort_random(img_obj)
 
             # choose a random image from the background images
 
@@ -171,19 +212,19 @@ def modify(obj_count, blur=True, flip=True, resize=True, tint=True, darken=True)
                 img_bkg = resize_img(img_bkg)
 
 
-            if blur and random.random() >= 0.5:
+            if blur and random.random() <= 0.95:
                 img_bkg = blur_random(img_bkg)
             
             # mirror image
-            if flip and random.random() >= 0.5:
+            if flip and random.random() <= 0.5:
                 img_bkg = cv2.flip(img_bkg, 1)
 
             img_join, coords = join_images(img_obj, img_bkg)
             
-            if tint and random.random() >= 0.75:
+            if tint and random.random() <= 0.95:
                 img_join = water_tint(img_join)
 
-            if darken and random.random() >= 0.75:
+            if darken and random.random() <= 0.95:
                 img_join = random_darken(img_join)
             
             name = 'save/' + str(i) + "_" + str(j)
@@ -196,16 +237,40 @@ def modify(obj_count, blur=True, flip=True, resize=True, tint=True, darken=True)
             cv2.imwrite(name + ".jpg", img_join) # save image
             print("saved", name)
 
+    # make empty images
+
+
+    i = len(obj_count) - 1
+
+    for j in range(obj_count[i]):
+
+        img_bkg = None
+        # pick another image if the chosen one can't be opened
+        while (img_bkg is None):
+            img_bkg = cv2.imread("bkg/" + random.choice(bkg_list))
+
+        name = 'save/' + str(i) + "_" + str(j)
+
+        # save txt
+        with open(name + ".txt", "w+") as outfile:
+            pass
+
+        cv2.imwrite(name + ".jpg", img_bkg) # save image
+        print("saved", name)
+
 
 if __name__ == "__main__":
 
-    parser = argparse.ArgumentParser(description="Combine images to create new ones")
+    parser = argparse.ArgumentParser(description="Combine images to create new ones", conflict_handler="resolve")
 
     parser.add_argument("obj_count", help="Amount of images to create",
                     nargs='+', type=int)
 
     parser.add_argument('-n', action='store_true', default=False,
                     dest='n', help='Combines the images without modifing it')
+
+    parser.add_argument('-t', action='store_true', default=False,
+                    dest='t', help='Applies a linear transform distortion to the image')
 
     parser.add_argument('-b', action='store_true', default=False,
                     dest='b', help='Blurs the image')
@@ -229,10 +294,10 @@ if __name__ == "__main__":
     get_images_names()
 
     if args.n:
-        modify(args.obj_count, False, False, False, False, False)
+        modify(args.obj_count, False, False, False, False, False, False)
 
     elif any([args_dict[a] for a in args_dict if a != 'obj_count']):
-        modify(args.obj_count, args.b, args.f, args.r, args.t, args.d)
+        modify(args.obj_count, args.t, args.b, args.f, args.r, args.t, args.d)
 
     else:
         modify(args.obj_count)
