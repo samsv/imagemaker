@@ -60,8 +60,9 @@ def join_images(img_obj, img_bkg):
     # copy img_bkg to img_join to maked the changes
     img_join = img_bkg.copy()
 
-
     img_join[y_offset:y_offset+img_obj.shape[0], x_offset:x_offset+img_obj.shape[1]] = img_obj
+
+    img_join[np.where(img_join==[0,0,0])] = img_bkg[np.where(img_join==[0,0,0])]
 
     x = ((2 * x_offset + img_obj.shape[1]) / 2) / img_bkg.shape[1]
     y = ((2 * y_offset + img_obj.shape[0]) / 2) / img_bkg.shape[0]
@@ -77,32 +78,21 @@ def distort_random(img):
     """
     Distorts the image by a random amount
     """
-    # I don't know how this code works, it was all made using trial and error 
-    # Stack Overflow or anything like it was used
-    # If you wish to learn how this code works, check OpenCV's affine transformation tutorial
-    # Good luck using it
+    # These points seem to work fine
+    # https://docs.opencv.org/3.4/d4/d61/tutorial_warp_affine.html
+
     rows, cols, ch = img.shape
 
-    y = x = random.random()*50
+    x1 = 10 * random.random()
+    y1 = 50 * random.random()
 
-    pts1 = [[x, y]]
-    pts2 = [[x+100,y+100]]
+    y2 = 50 * random.random() + 50
 
-    # The numbers are magic
-    # Unexpected results WILL happen if you change them
-    # Unexpected results might happen if you don't change them as well
-    x,y = rows*random.random(), cols*random.random()/2
-    r = random.random()*30
-    pts1.append([x, y])
-    pts2.append([x+r+50, y+r+50])
+    x3 = rows - 100 * random.random()
+    y3 = 100*(random.random() - 0.5)
 
-    # These points are the ones that work the best from the ones tested
-    # I.e. they are better than [rows, col]
-    pts1.append([rows/2, cols/2])
-    pts2.append([rows/2, cols/2])
-
-    pts1 = np.float32(pts1)
-    pts2 = np.float32(pts2)
+    pts1 = np.float32([[0,0],[0, y2],[rows, 0]])
+    pts2 = np.float32([[x1,y1],[0,y2],[x3, y3]])
 
     M = cv2.getAffineTransform(pts1,pts2)
 
@@ -115,7 +105,7 @@ def blur_random(img):
     Blurs the image to a random percentage.
     """
 
-    blur_level = (int(random.uniform(10, 40)),) * 2
+    blur_level = (int(random.uniform(5, 20)),) * 2
     return cv2.blur(img, blur_level)
 
 
@@ -134,11 +124,11 @@ def resize_random(img):
     """
 
     if random.random() > 0.3: # downscale
-        width = random.uniform(0.4,0.7)
-        height = random.uniform(0.4,0.7)
+        width = random.uniform(0.8,0.9)
+        height = random.uniform(0.5,0.7)
     else: # upscale
-        width = random.uniform(1,1.2)
-        height = random.uniform(1,1.2)
+        width = random.uniform(1,1.1)
+        height = random.uniform(1,1.1)
 
     return resize_img(img, width, height)
 
@@ -186,9 +176,6 @@ def modify(obj_count, transform=True, blur=True, flip=True, resize=True, tint=Tr
             
             img_obj = cv2.imread("obj/" + o)
 
-            if blur and random.random() <= 0.95:
-                img_obj = blur_random(img_obj)
-            
             if resize and random.random() <= 0.95:
                 img_obj = resize_random(img_obj)
 
@@ -211,10 +198,6 @@ def modify(obj_count, transform=True, blur=True, flip=True, resize=True, tint=Tr
             while ((img_bkg.shape[0] < img_obj.shape[0]) or (img_bkg.shape[1] < img_obj.shape[1])):
                 img_bkg = resize_img(img_bkg)
 
-
-            if blur and random.random() <= 0.95:
-                img_bkg = blur_random(img_bkg)
-            
             # mirror image
             if flip and random.random() <= 0.5:
                 img_bkg = cv2.flip(img_bkg, 1)
@@ -226,7 +209,10 @@ def modify(obj_count, transform=True, blur=True, flip=True, resize=True, tint=Tr
 
             if darken and random.random() <= 0.95:
                 img_join = random_darken(img_join)
-            
+
+            if blur and random.random() <= 0.75:
+                img_join = blur_random(img_join)
+
             name = 'save/' + str(i) + "_" + str(j)
 
             # save txt
