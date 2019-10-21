@@ -12,16 +12,18 @@ Just run
 ```bash
 # create 100 new images for the object with class number 0
 # and 150 new images for the object with the class number 1
-python3 image_maker.py 100 150 
+# and create 10 images with no objects in it
+python3 image_maker.py 100 150 10
 ```
 
 If you want to edit the parameters
 ```python
 import image_maker
 # List containing how many new images to create for each object
-# In this case it will create 100 new images for the object with class number 0
-# and 150 new images for the object with the class number 1
-new_images = [100, 150] 
+# In this case it will create 100 new images for the object with class number 0,
+# 150 new images for the object with the class number 1
+# and 0 images with no object
+new_images = [100, 150, 0] 
 image_maker.get_images_names() # Get images from obj and bkg folder
 image_maker.modify(new_images) # Create and save the new images
 ```
@@ -29,6 +31,7 @@ image_maker.modify(new_images) # Create and save the new images
 ## Parameters
 This modify function has the following parameters
 
+* transform: applies a linear transformatio to the image
 * blur: blurs the image
 * flip: mirrors the image
 * resize: resizes the object size
@@ -41,12 +44,12 @@ By calling the script through the command line without arguments all of the para
 To set one (or more) parameters to true add a flag with the first letter of the parameter name. e.g.:
 
 ```bash
-python3 image_maker.py 100 150 -r -t # Only resize and tint the image
+python3 image_maker.py 100 150 0 -r -t # Only resize and tint the image
 ```
 By setting the -n flag the images will be combined but not modified.
 
 ```bash
-python3 image_maker.py 100 150 -n # Only combine the images
+python3 image_maker.py 100 150 100 -n # Only combine the images
 ```
 
 The -n flag will overwrite any other flag.
@@ -56,9 +59,10 @@ The same can be done on the python console by setting the parameters to the desi
 ```python
 import image_maker
 # List containing how many new images to create for each object
-# In this case it will create 100 new images for the object with class number 0
-# and 150 new images for the object with the class number 1
-new_images = [100, 150] 
+# In this case it will create 100 new images for the object with class number 0,
+# 150 new images for the object with the class number 1
+# and 100 images with no objects
+new_images = [100, 150 100] 
 image_maker.get_images_names() # Get images from obj and bkg folder
 # Create and save the new images. Don't mirror or darken the images
 image_maker.modify(new_images, flip=False, darken=False) 
