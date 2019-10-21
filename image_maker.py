@@ -26,7 +26,11 @@ def get_images(folder_name):
 
     image_extensions = [".jpg", ".png", ".gif"]
 
-    return [f for f in os.listdir(folder_name) if f[-4:] in image_extensions]
+    images = [f for f in os.listdir(folder_name) if f[-4:] in image_extensions]
+
+    images.sort()
+
+    return images
 
 
 def get_images_names():
